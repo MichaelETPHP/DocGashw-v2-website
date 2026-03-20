@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment & templates (do not push)
+.env
+.env.example
+
+# Tooling / IDE
+.claude/
+.vscode/
+
+# SvelteKit build output
+.svelte-kit/
+
+# Admin credentials & setup doc
+/admin.json
+ADMIN_SETUP.md
+
+# Supabase SQL / local migrations folder (root only — not src/lib/supabase)
+/supabase/
+
+# Logs & OS junk
+.DS_Store
+Thumbs.db
+npm-debug.log*
