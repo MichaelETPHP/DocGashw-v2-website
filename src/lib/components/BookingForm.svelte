@@ -65,17 +65,14 @@
     status.error = null;
 
     try {
-      const response = await fetch('/api/booking', {
+      const res = await fetch('/api/booking', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
+      const result = await res.json();
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
+      if (res.ok && result.success) {
         status.success = true;
         form = {
           patientName: '',
@@ -90,9 +87,8 @@
       } else {
         status.error = result.message || 'An error occurred while processing your request.';
       }
-    } catch (error) {
-      console.error('Booking form error:', error);
-      status.error = 'An unexpected error occurred. Please try again later.';
+    } catch (err) {
+      status.error = err.message || 'An unexpected error occurred. Please try again later.';
     } finally {
       status.submitting = false;
     }

@@ -69,7 +69,10 @@ export async function PUT({ params, request, cookies }) {
   if (content !== undefined) updateData.body = content;
   if (category !== undefined) updateData.category = category;
   if (image_url !== undefined) updateData.image_url = image_url;
-  if (is_published !== undefined) updateData.is_published = is_published;
+  if (is_published !== undefined) {
+    updateData.is_published = is_published;
+    if (is_published) updateData.published_at = new Date().toISOString();
+  }
 
   const { data, error } = await supabase
     .from(TABLE)

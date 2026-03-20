@@ -13,6 +13,68 @@
                 %sveltekit.head%
         </head>
         <body data-sveltekit-preload-data="hover" class="bg-[#f5f0e8] text-[#1a1a2e]">
+                <div id="initial-page-loader" aria-label="Loading">
+                        <div class="initial-loader-backdrop"></div>
+                        <div class="initial-loader-spinner">
+                                <svg viewBox="0 0 50 50" aria-hidden="true">
+                                        <circle class="initial-spinner-track" cx="25" cy="25" r="20" fill="none" stroke-width="4" />
+                                        <circle class="initial-spinner-head" cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="30 95" />
+                                </svg>
+                        </div>
+                </div>
+                <style>
+                        #initial-page-loader {
+                                position: fixed;
+                                inset: 0;
+                                z-index: 99999;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                pointer-events: auto;
+                                transition: opacity 0.25s ease-out;
+                        }
+                        .initial-loader-backdrop {
+                                position: absolute;
+                                inset: 0;
+                                background: rgba(255, 255, 255, 0.4);
+                                backdrop-filter: blur(8px);
+                                -webkit-backdrop-filter: blur(8px);
+                        }
+                        .initial-loader-spinner {
+                                position: relative;
+                                z-index: 1;
+                                width: 48px;
+                                height: 48px;
+                        }
+                        .initial-loader-spinner svg {
+                                width: 100%;
+                                height: 100%;
+                                animation: initial-spin 0.8s linear infinite;
+                        }
+                        .initial-spinner-track { stroke: rgba(26, 26, 46, 0.1); }
+                        .initial-spinner-head {
+                                stroke: #c59153;
+                                transform: rotate(-90deg);
+                                transform-origin: center;
+                        }
+                        @keyframes initial-spin { to { transform: rotate(360deg); } }
+                </style>
+                <script>
+                        (function() {
+                                function hideLoader() {
+                                        var el = document.getElementById('initial-page-loader');
+                                        if (!el) return;
+                                        el.style.opacity = '0';
+                                        el.style.pointerEvents = 'none';
+                                        el.addEventListener('transitionend', function() { el.remove(); });
+                                }
+                                if (document.readyState === 'complete') {
+                                        requestAnimationFrame(hideLoader);
+                                } else {
+                                        window.addEventListener('load', hideLoader);
+                                }
+                        })();
+                </script>
                 <div style="display: contents">%sveltekit.body%</div>
         </body>
 </html>

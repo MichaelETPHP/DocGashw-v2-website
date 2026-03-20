@@ -21,13 +21,25 @@ export async function authenticateUser(login, password) {
     };
   }
 
-  const { data: user, error } = await supabase
-    .from(USERS_TABLE)
-    .select('id, email, username, password_hash, full_name, role, is_active')
-    .or(`email.eq.${login},username.eq.${login}`)
-    .single();
+  const loginTrimmed = String(login || '').trim();
+  if (!loginTrimmed) {
+    return { success: false, error: 'Invalid credentials' };
+  }
 
-  if (error || !user) {
+  let user = null;
+  let err = null;
+  const select = 'id, email, username, password_hash, full_name, role, is_active';
+
+  const byEmail = await supabase.from(USERS_TABLE).select(select).eq('email', loginTrimmed).maybeSingle();
+  if (byEmail.data) {
+    user = byEmail.data;
+  } else {
+    const byUsername = await supabase.from(USERS_TABLE).select(select).eq('username', loginTrimmed).maybeSingle();
+    user = byUsername.data;
+    err = byUsername.error;
+  }
+
+  if (err || !user) {
     return { success: false, error: 'Invalid credentials' };
   }
 

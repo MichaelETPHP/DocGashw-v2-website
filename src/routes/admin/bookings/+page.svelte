@@ -5,9 +5,9 @@
 
   onMount(async () => {
     try {
-      const response = await fetch('/api/booking/list');
-      const data = await response.json();
-      bookings = data.bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const res = await fetch('/api/booking/list');
+      const data = await res.json();
+      bookings = (data.bookings || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {

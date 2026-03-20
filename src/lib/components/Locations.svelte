@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
 
   let visible = false;
+  let locations = [];
+  let loading = true;
 
   function checkVisibility() {
     const element = document.getElementById('locations');
@@ -11,30 +13,27 @@
     if (rect.top <= windowHeight * 0.75) visible = true;
   }
 
-  onMount(() => {
+  onMount(async () => {
     window.addEventListener('scroll', checkVisibility);
     checkVisibility();
+    try {
+      const res = await fetch('/api/locations');
+      const data = await res.json();
+      locations = (data.locations || []).map((loc) => ({
+        name: loc.name,
+        role: loc.role,
+        address: loc.address,
+        hours: loc.hours,
+        description: loc.description,
+        type: loc.type
+      }));
+    } catch (err) {
+      console.error('Failed to load locations:', err);
+    } finally {
+      loading = false;
+    }
     return () => window.removeEventListener('scroll', checkVisibility);
   });
-
-  const locations = [
-    {
-      name: "Black Lion Hospital",
-      role: "Senior Consultant",
-      address: "Churchill Avenue, Addis Ababa, Ethiopia",
-      hours: "Monday, Wednesday, Friday: 8:00 AM - 4:00 PM",
-      description: "Dr. Gashaw Arega serves as a senior consultant at Black Lion Hospital, Ethiopia's premier referral and teaching hospital. Here, he leads the pediatric hematology-oncology team and supervises complex cases referred from throughout the country.",
-      type: "Public Hospital"
-    },
-    {
-      name: "Betzata Private Clinic",
-      role: "Specialist Consultant",
-      address: "Bole Road, Addis Ababa, Ethiopia",
-      hours: "Tuesday, Thursday: 9:00 AM - 6:00 PM, Saturday: 9:00 AM - 1:00 PM",
-      description: "At Betzata Private Clinic, Dr. Gashaw Arega provides specialized care in a private setting. The clinic offers personalized attention, shorter waiting times, and continuity of care for patients requiring ongoing treatment.",
-      type: "Private Clinic"
-    }
-  ];
 </script>
 
 <section id="locations" class="locations">
@@ -48,6 +47,11 @@
 
     <!-- Locations Grid -->
     <div class="locations__grid">
+      {#if loading}
+        <div class="locations__loading">Loading locations…</div>
+      {:else if locations.length === 0}
+        <div class="locations__empty">No locations available at the moment.</div>
+      {:else}
       {#each locations as location, i}
         <div
           class="locations__card"
@@ -80,13 +84,14 @@
           </div>
 
           <a href="#contact" class="locations__card-link">
-            <span>Book an appointment</span>
+            <span>Contact now</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
 
           <div class="locations__card-accent"></div>
         </div>
       {/each}
+      {/if}
     </div>
   </div>
 </section>
@@ -156,6 +161,15 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
+  }
+
+  .locations__loading,
+  .locations__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: rgba(245, 240, 232, 0.6);
+    font-size: 1rem;
   }
 
   @media (max-width: 768px) {

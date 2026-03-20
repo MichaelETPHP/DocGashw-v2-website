@@ -1,9 +1,11 @@
 <script>
+  import { page } from '$app/stores';
   export let data;
   $: user = data?.user ?? {};
-  $: currentPath = '';
+  $: currentPath = $page?.url?.pathname ?? '';
 
   let sidebarOpen = false;
+  let logoutLoading = false;
 
   function toggleSidebar() {
     sidebarOpen = !sidebarOpen;
@@ -14,14 +16,21 @@
   }
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
+    if (logoutLoading) return;
+    logoutLoading = true;
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/login';
+    } catch (err) {
+      logoutLoading = false;
+    }
   }
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { href: '/admin/blog', label: 'Blog Posts', icon: 'blog' },
-    { href: '/admin/bookings', label: 'Bookings', icon: 'bookings' },
+    { href: '/admin/locations', label: 'Locations', icon: 'locations' },
+    // Bookings hidden for v2 - { href: '/admin/bookings', label: 'Bookings', icon: 'bookings' },
   ];
 
   function isActive(href, path) {
@@ -31,6 +40,7 @@
 </script>
 
 <svelte:head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -47,16 +57,7 @@
     <div class="sidebar-header">
       <a href="/admin" class="sidebar-brand">
         <div class="brand-mark">
-          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="32" height="32" rx="8" fill="url(#logoGrad)" />
-            <path d="M16 22s-7-4.5-7-9c0-2.5 1.75-4.25 3.85-4.25 1.4 0 2.45.7 3.15 1.75.7-1.05 1.75-1.75 3.15-1.75 2.1 0 3.85 1.75 3.85 4.25 0 4.5-7 9-7 9z" fill="white" opacity="0.95" />
-            <defs>
-              <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#3B82F6" />
-                <stop offset="1" stop-color="#1D4ED8" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <img src="/doctor-profile.jpg" alt="Dr. Gashaw" class="brand-mark-img" />
         </div>
         <div class="brand-text">
           <span class="brand-name">Dr. Gashaw</span>
@@ -87,9 +88,9 @@
               <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd" />
               <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" />
             </svg>
-          {:else if item.icon === 'bookings'}
+          {:else if item.icon === 'locations'}
             <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+              <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
             </svg>
           {/if}
           <span>{item.label}</span>
@@ -100,17 +101,24 @@
     <div class="sidebar-footer">
       <div class="user-card">
         <div class="user-avatar">
-          {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
+          <img src="/doctor-profile.jpg" alt={user.full_name || 'Admin'} class="user-avatar-img" />
         </div>
         <div class="user-info">
           <span class="user-name">{user.full_name || user.username || 'Admin'}</span>
           <span class="user-role">{user.role || 'admin'}</span>
         </div>
       </div>
-      <button class="logout-btn" on:click={handleLogout} title="Sign out">
-        <svg viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" />
-        </svg>
+      <button class="logout-btn" on:click={handleLogout} title="Sign out" aria-label="Sign out" disabled={logoutLoading}>
+        {#if logoutLoading}
+          <svg class="btn-spinner" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+          </svg>
+        {:else}
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" />
+          </svg>
+        {/if}
       </button>
     </div>
   </aside>
@@ -146,15 +154,15 @@
   .admin-layout {
     display: flex;
     min-height: 100vh;
-    background: #f1f5f9;
-    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  /* ===== Sidebar ===== */
+  /* ===== Sidebar - Dark professional ===== */
   .sidebar {
     width: 260px;
-    background: white;
-    border-right: 1px solid #e2e8f0;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -163,16 +171,18 @@
     bottom: 0;
     z-index: 40;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
   }
 
   .sidebar-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 35;
     border: none;
     cursor: pointer;
+    backdrop-filter: blur(2px);
   }
 
   .sidebar-close {
@@ -181,7 +191,11 @@
     border: none;
     padding: 0.25rem;
     cursor: pointer;
-    color: #64748b;
+    color: #94a3b8;
+  }
+
+  .sidebar-close:hover {
+    color: #f8fafc;
   }
 
   .sidebar-close svg {
@@ -194,7 +208,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1.25rem 1.25rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .sidebar-brand {
@@ -208,11 +222,15 @@
     width: 36px;
     height: 36px;
     flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
   }
 
-  .brand-mark svg {
+  .brand-mark-img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .brand-text {
@@ -223,16 +241,16 @@
   .brand-name {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #0f172a;
+    color: #f8fafc;
     letter-spacing: -0.01em;
   }
 
   .brand-role {
-    font-size: 0.7rem;
-    color: #94a3b8;
+    font-size: 0.68rem;
+    color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 500;
+    letter-spacing: 0.1em;
+    font-weight: 600;
   }
 
   /* ===== Nav ===== */
@@ -241,46 +259,53 @@
     padding: 1rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
   }
 
   .nav-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.65rem 0.85rem;
-    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    border-radius: 8px;
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    color: #475569;
+    color: #94a3b8;
     transition: all 0.15s;
   }
 
   .nav-item:hover {
-    background: #f8fafc;
-    color: #1e293b;
+    background: rgba(255, 255, 255, 0.06);
+    color: #f8fafc;
   }
 
   .nav-item.active {
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
     font-weight: 600;
+    border: 1px solid rgba(59, 130, 246, 0.25);
   }
 
   .nav-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    opacity: 0.9;
+  }
+
+  .nav-item.active .nav-icon {
+    color: #60a5fa;
   }
 
   /* ===== Sidebar Footer ===== */
   .sidebar-footer {
     padding: 1rem 0.75rem;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
   }
 
   .user-card {
@@ -294,15 +319,17 @@
   .user-avatar {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-    font-weight: 700;
+    border-radius: 8px;
+    overflow: hidden;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .user-info {
@@ -314,7 +341,7 @@
   .user-name {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #1e293b;
+    color: #f8fafc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -322,16 +349,16 @@
 
   .user-role {
     font-size: 0.7rem;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: capitalize;
   }
 
   .logout-btn {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    background: white;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     color: #94a3b8;
     cursor: pointer;
     display: flex;
@@ -342,14 +369,29 @@
   }
 
   .logout-btn:hover {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #dc2626;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
   }
 
   .logout-btn svg {
     width: 18px;
     height: 18px;
+  }
+
+  .logout-btn:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+  }
+
+  .btn-spinner {
+    width: 18px;
+    height: 18px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   /* ===== Main Wrapper ===== */
@@ -359,12 +401,13 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    background: #f8fafc;
   }
 
   /* ===== Topbar ===== */
   .topbar {
-    height: 60px;
-    background: white;
+    height: 64px;
+    background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
@@ -373,6 +416,7 @@
     position: sticky;
     top: 0;
     z-index: 20;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
 
   .menu-toggle {
@@ -387,6 +431,7 @@
 
   .menu-toggle:hover {
     background: #f1f5f9;
+    color: #0f172a;
   }
 
   .menu-toggle svg {
@@ -403,13 +448,13 @@
   .view-site-btn {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
     padding: 0.5rem 1rem;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
     background: white;
     color: #475569;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 500;
     text-decoration: none;
     transition: all 0.15s;
@@ -417,8 +462,9 @@
 
   .view-site-btn:hover {
     background: #f8fafc;
-    color: #1e293b;
+    color: #0f172a;
     border-color: #cbd5e1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
 
   .view-site-btn svg {
@@ -430,12 +476,14 @@
   .main-content {
     flex: 1;
     padding: 1.5rem;
+    background: #f8fafc;
   }
 
-  /* ===== Responsive ===== */
+  /* ===== Responsive - Mobile First ===== */
   @media (max-width: 768px) {
     .sidebar {
       transform: translateX(-100%);
+      width: min(280px, 85vw);
     }
 
     .sidebar.open {
@@ -456,10 +504,44 @@
 
     .menu-toggle {
       display: flex;
+      min-width: 44px;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .view-site-btn {
+      min-height: 44px;
+      padding: 0.6rem 1rem;
     }
 
     .view-site-btn span {
       display: none;
+    }
+
+    .main-content {
+      padding: 1rem;
+    }
+
+    .topbar {
+      height: 56px;
+      padding: 0 1rem;
+    }
+
+    .nav-item {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
+    }
+
+    .logout-btn {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .main-content {
+      padding: 0.75rem;
     }
   }
 </style>

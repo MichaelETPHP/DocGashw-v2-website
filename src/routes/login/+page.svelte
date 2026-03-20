@@ -1,10 +1,29 @@
 <script>
+  import { onMount } from 'svelte';
+
   let login = '';
   let password = '';
   let error = '';
   let loading = false;
   let showPassword = false;
   let focusedField = '';
+  let dbStatus = null; // null = checking, true = connected, false = disconnected
+  let dbError = '';
+  let dbHint = '';
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      dbStatus = data.ok === true;
+      dbError = data.message || '';
+      dbHint = data.hint || '';
+    } catch {
+      dbStatus = false;
+      dbError = 'Failed to reach health API';
+      dbHint = 'Check if the server is running.';
+    }
+  });
 
   function setFocus(field) {
     focusedField = field;
@@ -18,7 +37,8 @@
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login, password })
+        body: JSON.stringify({ login, password }),
+        credentials: 'include'
       });
       const data = await res.json();
       if (!res.ok) {
@@ -197,6 +217,28 @@
             {/if}
           </button>
         </form>
+
+        <!-- Database status -->
+        <div class="db-status" class:db-status--checking={dbStatus === null} class:db-status--connected={dbStatus === true} class:db-status--disconnected={dbStatus === false}>
+          {#if dbStatus === null}
+            <span class="db-status-icon db-status-icon--spinner">...</span>
+            <span class="db-status-text">Checking database...</span>
+          {:else if dbStatus === true}
+            <span class="db-status-icon db-status-icon--ok">✓</span>
+            <span class="db-status-text">Database connected</span>
+          {:else}
+            <span class="db-status-icon db-status-icon--fail">✗</span>
+            <div class="db-status-details">
+              <span class="db-status-text">Database disconnected</span>
+              {#if dbError}
+                <span class="db-status-error">{dbError}</span>
+              {/if}
+              {#if dbHint}
+                <span class="db-status-hint">{dbHint}</span>
+              {/if}
+            </div>
+          {/if}
+        </div>
 
         <div class="form-footer">
           <a href="/" class="back-link">
@@ -616,9 +658,85 @@
     to { transform: rotate(360deg); }
   }
 
+  /* ===== Database Status ===== */
+  .db-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 1.5rem;
+  }
+
+  .db-status--checking {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .db-status--connected {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+
+  .db-status--disconnected {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    flex-wrap: wrap;
+  }
+
+  .db-status-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .db-status-error {
+    font-size: 0.75rem;
+    color: #b91c1c;
+    font-weight: 400;
+  }
+
+  .db-status-hint {
+    font-size: 0.7rem;
+    color: #991b1b;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .db-status-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .db-status-icon--ok {
+    background: #d1fae5;
+    color: #059669;
+  }
+
+  .db-status-icon--fail {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .db-status-icon--spinner {
+    background: #e2e8f0;
+    color: #64748b;
+  }
+
   /* ===== Footer ===== */
   .form-footer {
-    margin-top: 2rem;
+    margin-top: 1rem;
     text-align: center;
   }
 

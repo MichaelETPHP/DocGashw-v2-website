@@ -1,5 +1,24 @@
 <script>
+  import { onMount } from 'svelte';
+
   const currentYear = new Date().getFullYear();
+  let officeHours = [];
+  let loadingHours = true;
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/locations');
+      const data = await res.json();
+      officeHours = (data.locations || []).map((loc) => ({
+        name: loc.name,
+        hours: loc.hours
+      }));
+    } catch (err) {
+      console.error('Failed to load office hours:', err);
+    } finally {
+      loadingHours = false;
+    }
+  });
 </script>
 
 <footer class="footer">
@@ -52,28 +71,24 @@
         </nav>
       </div>
 
-      <!-- Office Hours -->
+      <!-- Office Hours (from admin) -->
       <div class="footer__col">
         <h4 class="footer__col-title">Office Hours</h4>
         <div class="footer__hours">
-          <div class="footer__hours-card">
-            <h5 class="footer__hours-name">Black Lion Hospital</h5>
-            <div class="footer__hours-row">
-              <span>Mon, Wed, Fri</span>
-              <span>8AM - 4PM</span>
-            </div>
-          </div>
-          <div class="footer__hours-card">
-            <h5 class="footer__hours-name">Betzata Clinic</h5>
-            <div class="footer__hours-row">
-              <span>Tue, Thu</span>
-              <span>9AM - 6PM</span>
-            </div>
-            <div class="footer__hours-row">
-              <span>Saturday</span>
-              <span>9AM - 1PM</span>
-            </div>
-          </div>
+          {#if loadingHours}
+            <div class="footer__hours-placeholder">Loading…</div>
+          {:else if officeHours.length === 0}
+            <div class="footer__hours-placeholder">No hours available</div>
+          {:else}
+            {#each officeHours as loc}
+              <div class="footer__hours-card">
+                <h5 class="footer__hours-name">{loc.name}</h5>
+                <div class="footer__hours-row">
+                  <span>{loc.hours}</span>
+                </div>
+              </div>
+            {/each}
+          {/if}
         </div>
       </div>
     </div>
@@ -269,11 +284,17 @@
   }
 
   .footer__hours-row {
-    display: flex;
-    justify-content: space-between;
     font-size: 0.8rem;
     color: rgba(245, 240, 232, 0.5);
     padding: 0.2rem 0;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+
+  .footer__hours-placeholder {
+    font-size: 0.8rem;
+    color: rgba(245, 240, 232, 0.35);
+    padding: 1rem 0;
   }
 
   /* Bottom */

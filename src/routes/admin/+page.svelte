@@ -12,7 +12,7 @@
 
   const quickActions = [
     { label: 'New Blog Post', href: '/admin/blog', icon: 'plus', description: 'Write and publish a new article' },
-    { label: 'View Bookings', href: '/admin/bookings', icon: 'calendar', description: 'Manage patient appointments' },
+    { label: 'Manage Locations', href: '/admin/locations', icon: 'locations', description: 'Edit hospital locations and hours' },
     { label: 'View Site', href: '/', icon: 'external', description: 'See your public portfolio' },
   ];
 
@@ -92,9 +92,9 @@
                 <svg viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
-              {:else if action.icon === 'calendar'}
+              {:else if action.icon === 'locations'}
                 <svg viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                 </svg>
               {:else if action.icon === 'external'}
                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -431,7 +431,7 @@
     margin-right: 0.4rem;
   }
 
-  /* ===== Responsive ===== */
+  /* ===== Responsive - Mobile ===== */
   @media (max-width: 1024px) {
     .stats-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -444,6 +444,30 @@
   @media (max-width: 640px) {
     .stats-grid {
       grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .welcome-section {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .welcome-date {
+      font-size: 0.8rem;
+    }
+
+    .welcome-title {
+      font-size: 1.25rem;
+    }
+
+    .action-item {
+      min-height: 56px;
+      padding: 1rem;
+    }
+
+    .action-icon {
+      min-width: 44px;
+      min-height: 44px;
     }
   }
 </style>

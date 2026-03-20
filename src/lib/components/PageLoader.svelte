@@ -1,65 +1,81 @@
 <script>
+  import { onDestroy } from 'svelte';
   import { navigating } from '$app/stores';
+  import { dataLoading } from '$lib/stores/loading.js';
 
-  let progress = 0;
   let visible = false;
-  let interval;
+  let timeout;
 
-  $: if ($navigating) {
-    startLoading();
-  } else {
-    finishLoading();
-  }
-
-  function startLoading() {
+  $: isActive = $navigating || $dataLoading;
+  $: if (isActive) {
     visible = true;
-    progress = 0;
-
-    clearInterval(interval);
-    interval = setInterval(() => {
-      if (progress < 90) {
-        progress += Math.random() * 15 + 5;
-        if (progress > 90) progress = 90;
-      }
-    }, 200);
-  }
-
-  function finishLoading() {
-    progress = 100;
-    clearInterval(interval);
-    setTimeout(() => {
+    clearTimeout(timeout);
+  } else if (visible) {
+    timeout = setTimeout(() => {
       visible = false;
-      progress = 0;
-    }, 400);
+    }, 300);
   }
+
+  onDestroy(() => clearTimeout(timeout));
 </script>
 
 {#if visible}
-  <div class="loader" class:loader--done={progress === 100}>
-    <div class="loader__bar" style="width: {progress}%" />
+  <div class="loader-overlay" role="status" aria-live="polite" aria-label="Loading">
+    <div class="loader-backdrop"></div>
+    <div class="loader-spinner">
+      <svg viewBox="0 0 50 50" aria-hidden="true">
+        <circle class="loader-spinner__track" cx="25" cy="25" r="20" fill="none" stroke-width="4" />
+        <circle class="loader-spinner__head" cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="30 95" />
+      </svg>
+    </div>
   </div>
 {/if}
 
 <style>
-  .loader {
+  .loader-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
+    inset: 0;
     z-index: 9999;
-    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
   }
 
-  .loader__bar {
+  .loader-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .loader-spinner {
+    position: relative;
+    z-index: 1;
+    width: 48px;
+    height: 48px;
+  }
+
+  .loader-spinner svg {
+    width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #c59153, #e8c88a, #c59153);
-    transition: width 0.2s ease-out;
-    box-shadow: 0 0 12px rgba(197, 145, 83, 0.5);
-    border-radius: 0 2px 2px 0;
+    animation: loader-spin 0.8s linear infinite;
   }
 
-  .loader--done .loader__bar {
-    transition: width 0.3s ease-out;
+  .loader-spinner__track {
+    stroke: rgba(26, 26, 46, 0.1);
+  }
+
+  .loader-spinner__head {
+    stroke: #c59153;
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+
+  @keyframes loader-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>
