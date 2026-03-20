@@ -82,20 +82,20 @@
 
 <section id="home" class="hero" class:hero--ready={ready}>
   <!-- Texture Overlay -->
-  <div class="hero__texture" />
+  <div class="hero__texture"></div>
 
   <!-- Decorative Line Grid -->
   <div class="hero__lines">
-    <div class="hero__line hero__line--1" />
-    <div class="hero__line hero__line--2" />
-    <div class="hero__line hero__line--3" />
-    <div class="hero__line hero__line--4" />
+    <div class="hero__line hero__line--1"></div>
+    <div class="hero__line hero__line--2"></div>
+    <div class="hero__line hero__line--3"></div>
+    <div class="hero__line hero__line--4"></div>
   </div>
 
   <!-- Floating Geometric Accents -->
-  <div class="hero__geo hero__geo--circle" />
-  <div class="hero__geo hero__geo--ring" />
-  <div class="hero__geo hero__geo--dot-cluster" />
+  <div class="hero__geo hero__geo--circle"></div>
+  <div class="hero__geo hero__geo--ring"></div>
+  <div class="hero__geo hero__geo--dot-cluster"></div>
 
   <!-- Main Content -->
   <div class="hero__container">
@@ -132,9 +132,9 @@
         <div class="hero__anim hero__anim--3">
           <div class="hero__credentials">
             <span class="hero__credential">MD</span>
-            <span class="hero__credential-sep" />
+            <span class="hero__credential-sep"></span>
             <span class="hero__credential">MPH</span>
-            <span class="hero__credential-sep" />
+            <span class="hero__credential-sep"></span>
             <span class="hero__credential">Pediatric Hematology-Oncology</span>
           </div>
         </div>
@@ -195,7 +195,7 @@
         <!-- Image Frame - Asymmetric -->
         <div class="hero__image-comp">
           <!-- Background decorative block -->
-          <div class="hero__image-block" />
+          <div class="hero__image-block"></div>
 
           <!-- Main image -->
           <div class="hero__image-main">
@@ -206,7 +206,7 @@
               loading="eager"
               fetchpriority="high"
             />
-            <div class="hero__image-grain" />
+            <div class="hero__image-grain"></div>
           </div>
 
           <!-- Overlapping accent card -->
@@ -236,7 +236,7 @@
           </div>
         {/each}
       </div>
-      <div class="hero__stats-accent" />
+      <div class="hero__stats-accent"></div>
     </div>
 
     <!-- Scroll Indicator -->
@@ -244,7 +244,7 @@
       <a href="#about" class="hero__scroll-link">
         <span>Scroll to explore</span>
         <div class="hero__scroll-line">
-          <div class="hero__scroll-dot" />
+          <div class="hero__scroll-dot"></div>
         </div>
       </a>
     </div>

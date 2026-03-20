@@ -7,9 +7,9 @@ export default defineConfig({
                 port: 5000,
                 host: '0.0.0.0',
                 cors: true,
-                hmr: {
-                        clientPort: 443,
-                },
+                hmr: process.env.GITPOD_WORKSPACE_URL || process.env.REPL_SLUG
+                        ? { clientPort: 443 }
+                        : true,
                 strictPort: true,
                 fs: {
                         allow: ['.']

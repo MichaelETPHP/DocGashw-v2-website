@@ -35,6 +35,7 @@
     <!-- Desktop Navigation -->
     <nav class="navbar__nav">
       <a href="#about" class="navbar__link">About</a>
+      <a href="#education" class="navbar__link">Education</a>
       <a href="#services" class="navbar__link">Services</a>
       <a href="#research" class="navbar__link">Research</a>
       <a href="#locations" class="navbar__link">Locations</a>
@@ -49,9 +50,9 @@
       on:click={toggleMenu}
     >
       <div class="navbar__toggle-bars">
-        <span class="navbar__bar" class:navbar__bar--open={isMenuOpen} />
-        <span class="navbar__bar navbar__bar--mid" class:navbar__bar--mid-open={isMenuOpen} />
-        <span class="navbar__bar" class:navbar__bar--bottom-open={isMenuOpen} />
+        <span class="navbar__bar" class:navbar__bar--open={isMenuOpen}></span>
+        <span class="navbar__bar navbar__bar--mid" class:navbar__bar--mid-open={isMenuOpen}></span>
+        <span class="navbar__bar" class:navbar__bar--bottom-open={isMenuOpen}></span>
       </div>
     </button>
   </div>
@@ -60,8 +61,12 @@
   <div
     class="navbar__mobile-overlay"
     class:navbar__mobile-overlay--open={isMenuOpen}
+    role="button"
+    tabindex="0"
+    aria-label="Close menu"
     on:click={toggleMenu}
-  />
+    on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggleMenu())}
+  ></div>
   <div class="navbar__mobile" class:navbar__mobile--open={isMenuOpen}>
     <div class="navbar__mobile-inner">
       <div class="navbar__mobile-header">
@@ -77,6 +82,7 @@
       <nav class="navbar__mobile-nav">
         {#each [
           {href: "#about", text: "About"},
+          {href: "#education", text: "Education"},
           {href: "#services", text: "Services"},
           {href: "#research", text: "Research"},
           {href: "#locations", text: "Locations"},

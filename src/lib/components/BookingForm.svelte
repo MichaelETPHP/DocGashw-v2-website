@@ -143,8 +143,9 @@
     <form on:submit|preventDefault={handleSubmit} class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Patient Name *</label>
+          <label for="patientName" class="block text-sm font-medium text-gray-700 mb-2">Patient Name *</label>
           <input
+            id="patientName"
             type="text"
             bind:value={form.patientName}
             required
@@ -153,8 +154,9 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
           <input
+            id="email"
             type="email"
             bind:value={form.email}
             required
@@ -181,8 +183,9 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Date *</label>
+          <label for="preferredDate" class="block text-sm font-medium text-gray-700 mb-2">Preferred Date *</label>
           <input
+            id="preferredDate"
             type="date"
             bind:value={form.date}
             min={today}
@@ -192,8 +195,9 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Available Time Slots *</label>
+          <label for="timeSlot" class="block text-sm font-medium text-gray-700 mb-2">Available Time Slots *</label>
           <select
+            id="timeSlot"
             bind:value={form.timeSlot}
             required
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -223,8 +227,9 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+        <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
         <textarea
+          id="message"
           bind:value={form.message}
           rows="3"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

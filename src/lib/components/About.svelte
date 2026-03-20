@@ -50,25 +50,29 @@
     <div class="about__header">
       <span class="about__label">About</span>
       <h2 class="about__title">A Life Dedicated to<br/>Children's Health</h2>
-      <div class="about__line" />
+      <div class="about__line"></div>
     </div>
 
     <div class="about__grid">
       <!-- Image Column -->
       <div class="about__image-col" class:about__image-col--visible={visible}>
-        <div class="about__image-frame">
-          {#each slides as slide, i}
-            <div class="about__slide" class:about__slide--active={slideIndex === i}>
-              <img
-                src={slide.src}
-                alt={slide.alt}
-                class="about__img"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          {/each}
-          <div class="about__img-overlay" />
+        <div class="about__image-comp">
+          <div class="about__image-block"></div>
+          <div class="about__image-frame">
+            {#each slides as slide, i}
+              <div class="about__slide" class:about__slide--active={slideIndex === i}>
+                <img
+                  src={slide.src}
+                  alt={slide.alt}
+                  class="about__img"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            {/each}
+            <div class="about__img-grain"></div>
+            <div class="about__img-overlay"></div>
+          </div>
         </div>
         <div class="about__dots">
           {#each slides as _, i}
@@ -78,7 +82,7 @@
               class:about__dot--active={slideIndex === i}
               aria-label="View slide {i + 1}"
               on:click={() => goToSlide(i)}
-            />
+            ></button>
           {/each}
         </div>
       </div>
@@ -109,21 +113,6 @@
             </svg>
           </button>
         </div>
-
-        <div class="about__card">
-          <h3 class="about__card-title">Education & Expertise</h3>
-          <p class="about__text">
-            Dr. Gashaw Arega holds a Doctor of Medicine (MD) degree from Addis Ababa University. He completed his specialty training in Pediatrics and Child Health at Tikur Anbessa Specialized Hospital, Addis Ababa University. He pursued subspecialty fellowship training in Pediatric Hematology and Oncology at Addis Ababa University, Aga Khan University and Indus Hospital, Pakistan. In addition, he holds a Master of Public Health (MPH) degree.
-          </p>
-          <p class="about__text about__text--mt">
-            His expertise focuses on childhood cancers, hematologic disorders, pediatric solid tumors, and strengthening pediatric oncology services in Ethiopia. He is an active member of the Ethiopian Society of Pediatric Hematology and Oncology (ESHO), Ethiopian Society of Hematology and Oncology (ESHO), SIOP Africa, and the International Society of Pediatric Oncology (SIOP).
-          </p>
-        </div>
-
-        <a href="#contact" class="about__cta">
-          <span>Schedule a Consultation</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
       </div>
     </div>
   </div>
@@ -189,6 +178,10 @@
     .about__container {
       padding: 0 1.5rem;
     }
+    .about__image-comp {
+      max-width: 380px;
+      margin: 0 auto;
+    }
   }
 
   /* Image Column */
@@ -203,12 +196,32 @@
     transform: translateY(0);
   }
 
+  .about__image-comp {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .about__image-block {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(197, 145, 83, 0.15), rgba(197, 145, 83, 0.05));
+    border-radius: 4px;
+    z-index: 0;
+  }
+
   .about__image-frame {
     position: relative;
+    z-index: 1;
     border-radius: 4px;
     overflow: hidden;
-    box-shadow: 0 20px 60px -12px rgba(26, 26, 46, 0.12);
-    aspect-ratio: 4/3;
+    box-shadow:
+      0 20px 60px -12px rgba(26, 26, 46, 0.15),
+      0 0 0 1px rgba(26, 26, 46, 0.05);
+    aspect-ratio: 3/4;
   }
 
   .about__slide {
@@ -231,7 +244,22 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
     display: block;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .about__image-frame:hover .about__img {
+    transform: scale(1.03);
+  }
+
+  .about__img-grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
   }
 
   .about__img-overlay {
@@ -309,10 +337,6 @@
     font-size: 0.95rem;
   }
 
-  .about__text--mt {
-    margin-top: 1rem;
-  }
-
   .about__expand {
     overflow: hidden;
     transition: max-height 0.35s ease-out, opacity 0.25s ease;
@@ -353,40 +377,6 @@
 
   .about__chevron--open {
     transform: rotate(180deg);
-  }
-
-  .about__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 1rem 2rem;
-    background: #1a1a2e;
-    color: #f5f0e8;
-    border-radius: 4px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    align-self: flex-start;
-  }
-
-  .about__cta svg {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.3s;
-  }
-
-  .about__cta:hover {
-    background: #c59153;
-    color: #1a1a2e;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(197, 145, 83, 0.25);
-  }
-
-  .about__cta:hover svg {
-    transform: translateX(4px);
   }
 
   @media (max-width: 640px) {

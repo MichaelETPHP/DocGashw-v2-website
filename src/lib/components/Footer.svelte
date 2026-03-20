@@ -4,7 +4,7 @@
 
 <footer class="footer">
   <!-- Decorative Top Line -->
-  <div class="footer__accent" />
+  <div class="footer__accent"></div>
 
   <div class="footer__container">
     <div class="footer__grid">
@@ -45,7 +45,7 @@
       <div class="footer__col">
         <h4 class="footer__col-title">Quick Links</h4>
         <nav class="footer__nav">
-          {#each ['About', 'Services', 'Research', 'Locations', 'Contact'] as link}
+          {#each ['About', 'Education', 'Services', 'Research', 'Locations', 'Contact'] as link}
             <a href="#{link.toLowerCase()}" class="footer__link">{link}</a>
           {/each}
           <a href="/blog" class="footer__link">Blog & News</a>

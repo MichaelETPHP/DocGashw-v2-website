@@ -1,6 +1,7 @@
 <script>
   import HeroPro from "$lib/components/HeroPro.svelte";
   import About from "$lib/components/About.svelte";
+  import Education from "$lib/components/Education.svelte";
   import Services from "$lib/components/Services.svelte";
   import Research from "$lib/components/Research.svelte";
   import Locations from "$lib/components/Locations.svelte";
@@ -19,6 +20,7 @@
 
 <HeroPro />
 <About />
+<Education />
 <Services />
 <Research />
 <Locations />

@@ -43,7 +43,7 @@
     <div class="locations__header">
       <span class="locations__label">Locations</span>
       <h2 class="locations__title">Where to Find<br/>Dr. Gashaw Arega</h2>
-      <div class="locations__line" />
+      <div class="locations__line"></div>
     </div>
 
     <!-- Locations Grid -->
@@ -84,7 +84,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
 
-          <div class="locations__card-accent" />
+          <div class="locations__card-accent"></div>
         </div>
       {/each}
     </div>

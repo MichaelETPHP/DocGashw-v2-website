@@ -44,7 +44,7 @@
       <span class="research__label">Research</span>
       <h2 class="research__title">Advancing Pediatric<br/>Oncology Science</h2>
       <p class="research__subtitle">Clinical research and innovation improving childhood cancer outcomes in sub-Saharan Africa.</p>
-      <div class="research__line" />
+      <div class="research__line"></div>
     </div>
 
     <!-- Intro -->

@@ -70,7 +70,7 @@
       <span class="services__label">Services & Specialties</span>
       <h2 class="services__title">Comprehensive Care for<br/>Young Patients</h2>
       <p class="services__subtitle">Specialized care for children with blood disorders and cancer, delivered with compassion and expertise.</p>
-      <div class="services__line" />
+      <div class="services__line"></div>
     </div>
 
     <!-- Services Grid -->
@@ -90,7 +90,7 @@
               <span class="services__tag">{tag}</span>
             {/each}
           </div>
-          <div class="services__card-accent" />
+          <div class="services__card-accent"></div>
         </div>
       {/each}
     </div>

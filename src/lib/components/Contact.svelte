@@ -51,7 +51,7 @@
       <span class="contact__label">Contact</span>
       <h2 class="contact__title">Get in Touch</h2>
       <p class="contact__subtitle">Schedule an appointment or inquire about consultations with Dr. Gashaw Arega.</p>
-      <div class="contact__line" />
+      <div class="contact__line"></div>
     </div>
 
     <!-- Quick Contact Links -->
@@ -74,7 +74,8 @@
       </a>
     </div>
 
-    <!-- Tabs -->
+    <!-- Tabs: Send Message / Book Appointment - hidden for now (set showTabs = true to restore) -->
+    {#if false}
     <div class="contact__tabs" class:contact__tabs--visible={visible}>
       <button
         class="contact__tab"
@@ -93,6 +94,7 @@
         <span>Book Appointment</span>
       </button>
     </div>
+    {/if}
 
     <!-- Content Grid -->
     <div class="contact__grid">
