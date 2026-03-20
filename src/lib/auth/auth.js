@@ -14,7 +14,11 @@ const SALT_ROUNDS = 12;
 export async function authenticateUser(login, password) {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
-    return { success: false, error: 'Database not configured' };
+    return {
+      success: false,
+      error:
+        'Database not configured. Set SUPABASE_URL and SUPABASE_SERVICE_KEY in `.env` (see .env.example).'
+    };
   }
 
   const { data: user, error } = await supabase

@@ -1,7 +1,18 @@
+/**
+ * All server-side database access goes through Supabase JS.
+ * Configure the root `.env` file:
+ * - SUPABASE_URL + SUPABASE_KEY (anon) + SUPABASE_SERVICE_KEY (service role)
+ * - DATABASE_URL is optional here for direct Postgres (migrations, psql); the app uses HTTP via Supabase.
+ */
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 
 const SCHEMA = 'DRGASHAW';
+
+/** Postgres connection string from `.env` (tools/scripts only; not used by createClient). */
+export function getDatabaseUrl() {
+  return env.DATABASE_URL || process.env.DATABASE_URL || '';
+}
 
 /** Resolve URL: prefers SvelteKit public name, then .env-style SUPABASE_URL */
 function getSupabaseUrl() {
