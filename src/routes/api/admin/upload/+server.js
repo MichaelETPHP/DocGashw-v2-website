@@ -44,10 +44,6 @@ export async function POST({ request, cookies }) {
     .from(bucket)
     .getPublicUrl(filePath);
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(filePath);
-
   // Explicitly force http for this specific storage domain
   const forceHttpUrl = publicUrl.replace('https://', 'http://');
 
