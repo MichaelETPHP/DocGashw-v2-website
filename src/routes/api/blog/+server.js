@@ -26,7 +26,7 @@ export async function GET() {
     excerpt: row.excerpt,
     body: row.body,
     category: row.category,
-    image_url: row.image_url,
+    image_url: row.image_url ? row.image_url.replace('https://db.selamdelivery.xyz', 'http://db.selamdelivery.xyz') : null,
     date: row.published_at || row.created_at,
     published_at: row.published_at,
     created_at: row.created_at
