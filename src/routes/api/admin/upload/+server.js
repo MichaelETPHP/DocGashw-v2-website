@@ -48,5 +48,8 @@ export async function POST({ request, cookies }) {
     .from(bucket)
     .getPublicUrl(filePath);
 
-  return json({ url: publicUrl });
+  // Explicitly force http for this specific storage domain
+  const forceHttpUrl = publicUrl.replace('https://', 'http://');
+
+  return json({ url: forceHttpUrl });
 }
