@@ -44,8 +44,9 @@ export async function POST({ request, cookies }) {
     .from(bucket)
     .getPublicUrl(filePath);
 
-  // Force HTTPS to prevent Mixed Content errors on production
-  const secureUrl = publicUrl.replace('http://', 'https://');
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(filePath);
 
-  return json({ url: secureUrl });
+  return json({ url: publicUrl });
 }

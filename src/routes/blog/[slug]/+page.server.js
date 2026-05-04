@@ -30,8 +30,8 @@ export async function load({ params }) {
       excerpt: data.excerpt,
       body: data.body,
       category: data.category,
-      image_url: data.image_url ? data.image_url.replace('http://', 'https://') : null,
-      images: (data.images || []).map(url => url.replace('http://', 'https://')),
+      image_url: data.image_url,
+      images: data.images || [],
       date: data.published_at || data.created_at
     }
   };

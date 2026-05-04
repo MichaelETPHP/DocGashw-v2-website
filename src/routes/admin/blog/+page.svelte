@@ -84,11 +84,9 @@
       title = post.title;
       body = post.body || '';
       category = post.category;
-      externalUrls = (post.images?.filter(url => url.startsWith('http') && !url.includes('supabase')) || [])
-        .map(url => url.replace('http://', 'https://'));
+      externalUrls = post.images?.filter(url => url.startsWith('http') && !url.includes('supabase')) || [];
       imageFiles = [];
-      imagePreviews = (post.images || (post.image_url ? [post.image_url] : []))
-        .map(url => url.replace('http://', 'https://'));
+      imagePreviews = post.images || (post.image_url ? [post.image_url] : []);
     } else {
       editingPost = null;
       title = '';
