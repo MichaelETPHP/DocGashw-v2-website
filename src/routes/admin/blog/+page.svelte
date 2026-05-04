@@ -6,10 +6,15 @@
   let showForm = false;
   let editingPost = null;
   let title = '';
-  let excerpt = '';
   let body = '';
   let category = 'Research';
-  let imageUrl = '';
+  let externalUrls = [];
+  let currentExternalUrl = '';
+  let imageFiles = [];
+  let imagePreviews = [];
+  let isUploading = false;
+  let isSubmitting = false;
+  let submitProgress = 0;
   let message = '';
   let messageType = 'success';
   let loading = false;
@@ -25,15 +30,22 @@
   $: filteredPosts = posts.filter((post) => {
     const matchesSearch = !searchQuery ||
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+      (post.excerpt && post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || post.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
   $: slug = slugify(title);
 
+  // Body scroll lock
+  $: {
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = showForm ? 'hidden' : '';
+    }
+  }
+
   $: postProgress = showForm ? Math.min(100, Math.round(
-    (title ? 25 : 0) + (excerpt ? 25 : 0) + (body ? 40 : 0) + (title ? 5 : 0) + (imageUrl ? 5 : 0)
+    (title ? 30 : 0) + (body ? 50 : 0) + (imagePreviews.length > 0 ? 20 : 0)
   )) : 0;
 
   $: progressColor = postProgress < 34 ? '#ef4444' : postProgress < 67 ? '#f59e0b' : postProgress < 100 ? '#3b82f6' : '#22c55e';
@@ -41,7 +53,7 @@
   function slugify(text) {
     return text
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
+      .replace(/[^\p{L}\p{N}\s-]/gu, '') // Allow all Unicode letters and numbers
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim();
@@ -55,93 +67,199 @@
   function openCreateForm() {
     editingPost = null;
     title = '';
-    excerpt = '';
     body = '';
     category = 'Research';
-    imageUrl = '';
+    externalUrls = [];
+    imageFiles = [];
+    imagePreviews = [];
     message = '';
+    submitProgress = 0;
+    isSubmitting = false;
     showForm = true;
   }
 
   function openEditForm(post) {
-    editingPost = post;
-    title = post.title;
-    excerpt = post.excerpt;
-    body = post.body || '';
-    category = post.category;
-    imageUrl = post.image_url || '';
+    if (post) {
+      editingPost = post;
+      title = post.title;
+      body = post.body || '';
+      category = post.category;
+      externalUrls = post.images?.filter(url => url.startsWith('http') && !url.includes('supabase')) || [];
+      imageFiles = [];
+      imagePreviews = post.images || (post.image_url ? [post.image_url] : []);
+    } else {
+      editingPost = null;
+      title = '';
+      body = '';
+      category = 'Research';
+      externalUrls = [];
+      imageFiles = [];
+      imagePreviews = [];
+    }
     message = '';
+    submitProgress = 0;
+    isSubmitting = false;
     showForm = true;
   }
 
   function closeForm() {
     showForm = false;
     editingPost = null;
+    imageFiles = [];
+    imagePreviews = [];
     message = '';
+  }
+
+  function handleFileChange(e) {
+    const files = Array.from(e.target.files);
+    addFiles(files);
+  }
+
+  function handlePaste(e) {
+    if (!showForm) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const pastedFiles = [];
+    for (const item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) pastedFiles.push(file);
+      }
+    }
+    if (pastedFiles.length > 0) {
+      addFiles(pastedFiles);
+      e.preventDefault();
+    }
+  }
+
+  function addFiles(files) {
+    const remaining = 4 - imageFiles.length;
+    const toAdd = files.slice(0, remaining);
+    
+    toAdd.forEach(file => {
+      imageFiles = [...imageFiles, file];
+      imagePreviews = [...imagePreviews, URL.createObjectURL(file)];
+    });
+
+    if (files.length > remaining) {
+      message = 'Limit of 4 images reached.';
+      messageType = 'error';
+    }
+  }
+
+  function removeImage(index, isExternal = false) {
+    if (isExternal) {
+      externalUrls = externalUrls.filter((_, i) => i !== index);
+    } else {
+      imageFiles = imageFiles.filter((_, i) => i !== index);
+    }
+    imagePreviews = imagePreviews.filter((_, i) => i !== index);
+  }
+
+  function addExternalUrl() {
+    if (!currentExternalUrl) return;
+    
+    if (!currentExternalUrl.startsWith('https://')) {
+      message = 'URL must start with https://';
+      messageType = 'error';
+      return;
+    }
+
+    if (!externalUrls.includes(currentExternalUrl)) {
+      if (externalUrls.length + imageFiles.length >= 4) {
+        message = 'Limit of 4 images reached.';
+        messageType = 'error';
+        return;
+      }
+      externalUrls = [...externalUrls, currentExternalUrl];
+      imagePreviews = [...imagePreviews, currentExternalUrl];
+      currentExternalUrl = '';
+      message = '';
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     message = '';
     loading = true;
+    isSubmitting = true;
+    submitProgress = 10;
 
     try {
-      const payload = {
+      // 1. Auto-generate excerpt internally
+      const autoExcerpt = body
+        .replace(/[#*`]/g, '')
+        .substring(0, 180)
+        .trim() + '...';
+
+      // 2. Upload multiple images
+      let uploadedUrls = [];
+      if (imageFiles.length > 0) {
+        isUploading = true;
+        const totalFiles = imageFiles.length;
+        
+        for (let i = 0; i < totalFiles; i++) {
+          const formData = new FormData();
+          formData.append('file', imageFiles[i]);
+          
+          const uploadRes = await fetch('/api/admin/upload', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
+          
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            uploadedUrls.push(uploadData.url);
+            submitProgress = 10 + Math.round(((i + 1) / totalFiles) * 60);
+          }
+        }
+        isUploading = false;
+      }
+
+      submitProgress = 80;
+
+      // 3. Create or update post
+      const finalImages = [...uploadedUrls, ...externalUrls];
+      const postData = {
         title,
         slug,
-        excerpt,
+        excerpt: autoExcerpt,
         body,
         category,
-        image_url: imageUrl || null
+        image_url: finalImages[0] || null,
+        images: finalImages
       };
 
-      let result;
-      try {
-        let res;
-        if (editingPost) {
-          res = await fetch(`/api/blog/${editingPost.slug}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            credentials: 'include'
-          });
-        } else {
-          res = await fetch('/api/blog', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            credentials: 'include'
-          });
-        }
-        result = await res.json();
-        if (!res.ok) {
-          message = result.error || 'Operation failed';
-          messageType = 'error';
-          loading = false;
-          return;
-        }
-      } catch (err) {
-        message = err.message || 'Operation failed';
-        messageType = 'error';
-        loading = false;
-        return;
-      }
+      const res = await fetch(editingPost ? `/api/blog/${editingPost.slug}` : '/api/blog', {
+        method: editingPost ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(postData),
+        credentials: 'include'
+      });
 
-      message = editingPost ? 'Post updated successfully.' : 'Post created successfully.';
-      messageType = 'success';
-      loading = false;
-      toastMessage = editingPost ? 'Post updated successfully.' : 'Post created successfully.';
-      if (!editingPost) {
-        title = '';
-        excerpt = '';
-        body = '';
-        imageUrl = '';
+      if (res.ok) {
+        submitProgress = 100;
+        message = editingPost ? 'Post updated!' : 'Post created and synced to Telegram!';
+        messageType = 'success';
+        setTimeout(() => {
+          isSubmitting = false;
+          closeForm();
+          // Use location.reload() to refresh the list
+          window.location.reload();
+        }, 1000);
+      } else {
+        const data = await res.json();
+        message = data.error || 'Failed to save post';
+        messageType = 'error';
+        isSubmitting = false;
       }
-      closeForm();
-      setTimeout(() => window.location.reload(), 600);
     } catch (err) {
-      message = 'Network error. Please try again.';
+      console.error('Submit error:', err);
+      message = 'An error occurred while saving';
       messageType = 'error';
+      isSubmitting = false;
+    } finally {
       loading = false;
     }
   }
@@ -391,33 +509,20 @@
 
 <!-- Create/Edit Modal -->
 {#if showForm}
-  <div
-    class="modal-overlay"
-    role="button"
-    tabindex="-1"
-    aria-label="Close modal"
-    on:click={closeForm}
-    on:keydown={(e) => {
-      if (e.key === 'Escape') { closeForm(); return; }
-      if (e.key === 'Enter' || e.key === ' ') {
-        if (e.target.closest('input, textarea, select')) return;
-        e.preventDefault();
-        closeForm();
-      }
-    }}
-  >
+  <div class="modal-overlay" on:paste={handlePaste}>
     <div
       class="modal"
       role="dialog"
       aria-modal="true"
       tabindex="-1"
-      on:click|stopPropagation
-      on:keydown={(e) => {
-        if (e.key !== 'Escape') e.stopPropagation();
-      }}
     >
       <div class="modal-header">
         <h2 class="modal-title">{editingPost ? 'Edit Post' : 'Create New Post'}</h2>
+        {#if isSubmitting}
+          <div class="header-progress">
+            <div class="header-progress-fill" style="width: {submitProgress}%"></div>
+          </div>
+        {/if}
         <button class="modal-close" on:click={closeForm} aria-label="Close">
           <svg viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -462,21 +567,63 @@
               <option value="Events">Events</option>
             </select>
           </div>
-          <div class="form-field">
-            <label for="imageUrl">Image URL</label>
-            <input id="imageUrl" type="url" bind:value={imageUrl} placeholder="https://... (paste to preview)" />
-            {#if imageUrl && imageUrl.trim().length > 10}
-              <div class="image-preview-wrap">
-                <img src={imageUrl} alt="Preview" class="image-preview" on:error={(e) => { if (e.target) e.target.style.display = 'none'; }} />
-              </div>
-            {/if}
-          </div>
         </div>
 
-        <div class="form-field">
-          <label for="excerpt">Excerpt *</label>
-          <textarea id="excerpt" bind:value={excerpt} required rows="3" placeholder="Short summary for listing"></textarea>
-        </div>
+        <div class="form-field full-width media-section">
+          <span class="section-label">Media Gallery (Max 4)</span>
+          <div class="media-management-grid">
+            <div class="file-dropzone" class:disabled={imagePreviews.length >= 4}>
+              <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="dropzone-content">
+                <span class="dropzone-text">Upload/Paste</span>
+              </div>
+              <input 
+                id="imageUpload" 
+                type="file" 
+                accept="image/*" 
+                multiple
+                disabled={imagePreviews.length >= 4}
+                on:change={handleFileChange} 
+              />
+            </div>
+
+            <div class="url-input-box">
+              <input 
+                type="url" 
+                bind:value={currentExternalUrl} 
+                placeholder="Paste external image URL..." 
+                on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addExternalUrl())}
+              />
+              <button type="button" class="btn-add-url" on:click={addExternalUrl} disabled={!currentExternalUrl || imagePreviews.length >= 4}>
+                Add
+              </button>
+            </div>
+          </div>
+
+            {#if isUploading}
+              <div class="pro-upload-status">
+                <div class="shimmer-bar"></div>
+                <span>Uploading to Secure Storage... {submitProgress}%</span>
+              </div>
+            {/if}
+            
+            {#if imagePreviews.length > 0}
+              <div class="pro-image-grid">
+                {#each imagePreviews as preview, i}
+                  <div class="pro-image-card">
+                    <img src={preview} alt="Preview" />
+                    <div class="card-overlay">
+                      <button type="button" class="btn-remove-pro" on:click={() => removeImage(i, externalUrls.includes(preview))} title="Remove" aria-label="Remove image">
+                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                {/each}
+          </div>
+        {/if}
+      </div>
 
         <div class="form-field">
           <label for="body">Content</label>
@@ -842,12 +989,13 @@
 
   .modal {
     background: white;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 700px;
-    max-height: 90vh;
+    border-radius: 24px;
+    width: 95%;
+    max-width: 1000px;
+    max-height: 92vh;
     overflow-y: auto;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+    overflow-x: hidden;
+    box-shadow: 0 25px 60px -12px rgba(0,0,0,0.4);
   }
 
   .modal-header {
@@ -865,22 +1013,24 @@
   }
 
   .modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     border: none;
-    background: #f1f5f9;
-    color: #64748b;
+    background: #ef4444;
+    color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
   }
 
   .modal-close:hover {
-    background: #e2e8f0;
-    color: #1e293b;
+    background: #dc2626;
+    transform: rotate(90deg);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
   }
 
   .modal-close svg {
@@ -928,14 +1078,14 @@
   .form-field input,
   .form-field select,
   .form-field textarea {
-    padding: 0.65rem 0.85rem;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+    border: 3px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 0.9rem;
     color: #1e293b;
     outline: none;
     transition: all 0.2s;
-    background: #f8fafc;
+    background: #ffffff;
     font-family: inherit;
     resize: vertical;
   }
@@ -986,31 +1136,308 @@
     transition: width 0.3s ease, background 0.3s ease;
   }
 
-  .image-preview-wrap {
-    margin-top: 0.75rem;
-    border-radius: 8px;
+  .modal {
+    background: #ffffff;
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    position: relative;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: modalPop 0.2s ease-out;
   }
 
-  .image-preview {
-    display: block;
-    max-width: 100%;
-    max-height: 200px;
-    width: auto;
-    height: auto;
-    object-fit: contain;
+  @keyframes modalPop {
+    from { opacity: 0; transform: scale(0.98) translateY(5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-form {
+    padding: 2rem;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .media-management-grid {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .file-dropzone {
+    flex: 0 0 160px;
+    border: 2px dashed #cbd5e1;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .url-input-box {
+    flex: 1;
+    display: flex;
+    gap: 0.5rem;
+    background: #ffffff;
+    border: 3px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 0.4rem 0.6rem;
+    align-items: center;
+  }
+
+  @media (max-width: 640px) {
+    .modal {
+      width: 100%;
+      height: 100vh;
+      max-height: -webkit-fill-available;
+      border-radius: 0;
+    }
+    .modal-form {
+      padding: 1rem;
+      padding-bottom: 2rem;
+    }
+    .media-management-grid {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .file-dropzone {
+      flex: none;
+      width: 100%;
+      padding: 1rem;
+    }
+  }
+
+  .file-dropzone:hover:not(.disabled) {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  .file-dropzone input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .file-dropzone.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-style: solid;
+  }
+
+  .url-input-box {
+    display: flex;
+    gap: 0.5rem;
+    background: #ffffff;
+    border: 3px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 0.5rem 0.75rem;
+    align-items: center;
+    transition: all 0.2s;
+  }
+
+  .url-input-box:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+  }
+
+  .url-input-box input {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    flex: 1;
+  }
+
+  .btn-add-url {
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .pro-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    padding: 0.25rem;
+  }
+
+  .pro-image-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s;
+  }
+
+  .pro-image-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .pro-image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .pro-image-card:hover .card-overlay {
+    opacity: 1;
+  }
+
+  .btn-remove-pro {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-remove-pro svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pro-upload-status {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: #1e40af;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-bar {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+  }
+
+  .modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    position: relative;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+  }
+
+  .modal-close {
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    transform: rotate(90deg);
+  }
+
+  .modal-close svg { width: 20px; height: 20px; }
+
+  .header-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #f1f5f9;
+  }
+
+  .header-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    transition: width 0.3s ease;
   }
 
   .form-alert {
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  .alert-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-  .alert-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
   .modal-actions {
     display: flex;

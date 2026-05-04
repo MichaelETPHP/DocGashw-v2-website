@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/auth/admin.js';
 import { getSupabaseAdmin, getSupabasePublic } from '$lib/supabase/server.js';
+import { sendTelegramNotification } from '$lib/utils/telegram.js';
 
 const TABLE = 'blog_posts';
 
@@ -40,7 +41,7 @@ export async function POST({ request, cookies }) {
   }
 
   const body = await request.json();
-  const { title, slug, excerpt, body: content, category, image_url } = body || {};
+  const { title, slug, excerpt, body: content, category, image_url, images } = body || {};
 
   if (!title || !slug || !excerpt) {
     return json({ error: 'Title, slug, and excerpt are required' }, { status: 400 });
@@ -67,6 +68,7 @@ export async function POST({ request, cookies }) {
       body: content || '',
       category: category || 'Research',
       image_url: image_url || null,
+      images: images || [],
       author_id: user.id,
       is_published: true,
       published_at: now,
@@ -81,6 +83,26 @@ export async function POST({ request, cookies }) {
     console.error('Supabase insert error:', error);
     return json({ error: 'Failed to create post.' }, { status: 500 });
   }
+
+  // Send Telegram Notification
+  const cleanTitle = title.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
+  const cleanContent = content ? content.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&') : excerpt.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
+  const truncatedContent = cleanContent.length > 2500 ? cleanContent.substring(0, 2500) + '...' : cleanContent;
+
+  const telegramMsg = `*${cleanTitle}*\n\n${truncatedContent}\n\n🔗 *Full Article:* https://gashawarega.com/blog/${slug}\n\n📱 *Connect With Us:*\n[Facebook](https://www.facebook.com/DrGashawArega) | [TikTok](https://www.tiktok.com/@gashwblog) | [Telegram](https://t.me/DrGashawArega)`;
+
+  const buttons = [
+    [
+      { text: 'Facebook', url: 'https://www.facebook.com/DrGashawArega' },
+      { text: 'TikTok', url: 'https://www.tiktok.com/@gashwblog' }
+    ],
+    [
+      { text: 'Join Telegram Channel', url: 'https://t.me/DrGashawArega' }
+    ]
+  ];
+
+  // Send in background to avoid blocking the user
+  sendTelegramNotification(telegramMsg, images, buttons);
 
   return json({ ok: true, id: data?.id, slug: data?.slug });
 }

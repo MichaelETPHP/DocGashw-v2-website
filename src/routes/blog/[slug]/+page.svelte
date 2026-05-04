@@ -36,7 +36,13 @@
           <time class="blog-post__date" datetime={post.date}>{formatDate(post.date)}</time>
         </div>
         <h1 class="blog-post__title">{post.title}</h1>
-        {#if post.image_url}
+        {#if post.images && post.images.length > 1}
+          <div class="blog-post__gallery">
+            {#each post.images as img}
+              <img src={img} alt="" class="blog-post__gallery-image" />
+            {/each}
+          </div>
+        {:else if post.image_url}
           <img src={post.image_url} alt="" class="blog-post__image" />
         {/if}
         <div class="blog-post__body">{post.body || post.excerpt}</div>
@@ -69,6 +75,24 @@
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
               <span>Facebook</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="blog-post__connect">
+          <h3 class="blog-post__connect-title">Connect With Us</h3>
+          <div class="blog-post__connect-links">
+            <a href="https://www.facebook.com/DrGashawArega" target="_blank" rel="noopener noreferrer" class="blog-post__connect-link facebook">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <span>Facebook</span>
+            </a>
+            <a href="https://www.tiktok.com/@gashwblog" target="_blank" rel="noopener noreferrer" class="blog-post__connect-link tiktok">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.6-4.12-1.31a6.34 6.34 0 0 1-1.68-1.33c-.1.74-.11 1.48-.11 2.22 0 1.52-.01 3.03-.01 4.55 0 1.75-.41 3.52-1.35 4.96-1.12 1.78-3.04 2.92-5.12 3.12a8.62 8.62 0 0 1-5.11-1.04c-1.89-1.08-3.14-3.1-3.11-5.28a7.7 7.7 0 0 1 1.05-4c1.1-1.87 3.12-3.08 5.28-3.1v4.1c-.81.01-1.63.26-2.28.75-.85.64-1.33 1.69-1.28 2.75.02.83.35 1.65.95 2.21.61.56 1.43.83 2.24.81.81-.02 1.59-.34 2.11-.96.6-.71.86-1.65.84-2.57.01-4.22-.01-8.44.02-12.66z"/></svg>
+              <span>TikTok</span>
+            </a>
+            <a href="https://t.me/DrGashawArega" target="_blank" rel="noopener noreferrer" class="blog-post__connect-link telegram">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.346 0 0 5.346 0 11.944c0 6.598 5.346 11.944 11.944 11.944 6.598 0 11.944-5.346 11.944-11.944C23.888 5.346 18.542 0 11.944 0zm5.824 8.016l-1.992 9.384c-.15.672-.552.84-.114.432l-3.036-2.244-1.464 1.416c-.162.162-.3.294-.618.294l.216-3.084 5.616-5.076c.246-.222-.054-.342-.378-.126l-6.942 4.368-2.988-.936c-.648-.204-.66-.648.138-.96l11.664-4.488c.54-.198 1.014.126.834.936z"/></svg>
+              <span>Telegram</span>
             </a>
           </div>
         </div>
@@ -161,6 +185,35 @@
     border-radius: 4px;
     margin-bottom: 2rem;
     box-shadow: 0 12px 40px rgba(26, 26, 46, 0.08);
+  }
+
+  .blog-post__gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .blog-post__gallery-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(26, 26, 46, 0.06);
+    transition: transform 0.3s ease;
+  }
+
+  .blog-post__gallery-image:hover {
+    transform: translateY(-5px);
+  }
+
+  @media (max-width: 640px) {
+    .blog-post__gallery {
+      grid-template-columns: 1fr;
+    }
+    .blog-post__gallery-image {
+      height: 240px;
+    }
   }
 
   .blog-post__body {
@@ -266,6 +319,66 @@
     color: #1877f2;
     border-color: rgba(24, 119, 242, 0.3);
   }
+
+  /* Connect section */
+  .blog-post__connect {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px dashed rgba(26, 26, 46, 0.1);
+    text-align: center;
+  }
+
+  .blog-post__connect-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8a8a9a;
+    margin-bottom: 1.5rem;
+  }
+
+  .blog-post__connect-links {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .blog-post__connect-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: #4a4a6a;
+    transition: all 0.3s ease;
+  }
+
+  .blog-post__connect-link svg {
+    width: 22px;
+    height: 22px;
+    color: #c59153;
+    transition: all 0.3s ease;
+  }
+
+  .blog-post__connect-link span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .blog-post__connect-link:hover {
+    transform: translateY(-3px) scale(1.05);
+  }
+
+  .blog-post__connect-link.facebook:hover { color: #1877f2; }
+  .blog-post__connect-link.facebook:hover svg { color: #1877f2; }
+  
+  .blog-post__connect-link.tiktok:hover { color: #000000; }
+  .blog-post__connect-link.tiktok:hover svg { color: #000000; }
+  
+  .blog-post__connect-link.telegram:hover { color: #0088cc; }
+  .blog-post__connect-link.telegram:hover svg { color: #0088cc; }
 
   @media (max-width: 640px) {
     .blog-post__container {

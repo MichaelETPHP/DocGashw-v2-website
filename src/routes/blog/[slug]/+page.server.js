@@ -13,7 +13,7 @@ export async function load({ params }) {
 
   const { data, error } = await supabase
     .from(TABLE)
-    .select('id, title, slug, excerpt, body, category, image_url, published_at, created_at')
+    .select('id, title, slug, excerpt, body, category, image_url, images, published_at, created_at')
     .eq('slug', slug)
     .eq('is_published', true)
     .maybeSingle();
@@ -31,6 +31,7 @@ export async function load({ params }) {
       body: data.body,
       category: data.category,
       image_url: data.image_url,
+      images: data.images || [],
       date: data.published_at || data.created_at
     }
   };

@@ -55,7 +55,7 @@ export async function PUT({ params, request, cookies }) {
   if (!slug) return json({ error: 'Slug required' }, { status: 400 });
 
   const body = await request.json();
-  const { title, slug: newSlug, excerpt, body: content, category, image_url, is_published } = body || {};
+  const { title, slug: newSlug, excerpt, body: content, category, image_url, images, is_published } = body || {};
 
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -69,6 +69,7 @@ export async function PUT({ params, request, cookies }) {
   if (content !== undefined) updateData.body = content;
   if (category !== undefined) updateData.category = category;
   if (image_url !== undefined) updateData.image_url = image_url;
+  if (images !== undefined) updateData.images = images;
   if (is_published !== undefined) {
     updateData.is_published = is_published;
     if (is_published) updateData.published_at = new Date().toISOString();
