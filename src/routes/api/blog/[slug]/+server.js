@@ -36,7 +36,9 @@ export async function GET({ params }) {
     excerpt: data.excerpt,
     body: data.body,
     category: data.category,
-    image_url: data.image_url ? data.image_url.replace('https://db.selamdelivery.xyz', 'http://db.selamdelivery.xyz') : null,
+    image_url: data.image_url ? 
+      (data.image_url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(data.image_url.replace('https://', 'http://'))}` : data.image_url) 
+      : null,
     date: data.published_at || data.created_at,
     published_at: data.published_at,
     created_at: data.created_at

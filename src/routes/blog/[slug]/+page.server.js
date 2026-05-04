@@ -30,8 +30,12 @@ export async function load({ params }) {
       excerpt: data.excerpt,
       body: data.body,
       category: data.category,
-      image_url: data.image_url ? data.image_url.replace('https://db.selamdelivery.xyz', 'http://db.selamdelivery.xyz') : null,
-      images: (data.images || []).map(url => url.replace('https://db.selamdelivery.xyz', 'http://db.selamdelivery.xyz')),
+      image_url: data.image_url ? 
+        (data.image_url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(data.image_url.replace('https://', 'http://'))}` : data.image_url) 
+        : null,
+      images: (data.images || []).map(url => 
+        url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(url.replace('https://', 'http://'))}` : url
+      ),
       date: data.published_at || data.created_at
     }
   };

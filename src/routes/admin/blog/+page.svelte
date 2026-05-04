@@ -85,10 +85,10 @@
       body = post.body || '';
       category = post.category;
       externalUrls = (post.images?.filter(url => url.startsWith('http') && !url.includes('supabase')) || [])
-        .map(url => url.replace('https://db.selamdelivery.xyz', 'http://db.selamdelivery.xyz'));
+        .map(url => url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(url.replace('https://', 'http://'))}` : url);
       imageFiles = [];
       imagePreviews = (post.images || (post.image_url ? [post.image_url] : []))
-        .map(url => url.replace('https://db.selamdelivery.xyz', 'http://db.selamdelivery.xyz'));
+        .map(url => url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(url.replace('https://', 'http://'))}` : url);
     } else {
       editingPost = null;
       title = '';
