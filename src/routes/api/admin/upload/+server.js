@@ -44,5 +44,8 @@ export async function POST({ request, cookies }) {
     .from(bucket)
     .getPublicUrl(filePath);
 
-  return json({ url: publicUrl });
+  // Force HTTPS to prevent Mixed Content errors on production
+  const secureUrl = publicUrl.replace('http://', 'https://');
+
+  return json({ url: secureUrl });
 }

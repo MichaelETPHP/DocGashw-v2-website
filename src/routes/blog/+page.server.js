@@ -22,7 +22,7 @@ export async function load() {
     excerpt: row.excerpt,
     body: row.body,
     category: row.category,
-    image_url: row.image_url,
+    image_url: row.image_url ? row.image_url.replace('http://', 'https://') : null,
     date: row.published_at || row.created_at
   }));
   return { posts };
