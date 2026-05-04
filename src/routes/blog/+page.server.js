@@ -9,7 +9,7 @@ export async function load() {
   }
   const { data, error } = await supabase
     .from(TABLE)
-    .select('id, title, slug, excerpt, body, category, image_url, published_at, created_at')
+    .select('id, title, slug, excerpt, body, category, image_url, images, published_at, created_at')
     .order('published_at', { ascending: false });
   if (error) {
     console.error('Supabase list error:', error);
@@ -25,6 +25,9 @@ export async function load() {
     image_url: row.image_url ? 
       (row.image_url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(row.image_url.replace('https://', 'http://'))}` : row.image_url) 
       : null,
+    images: (row.images || []).map(url => 
+      url.includes('db.selamdelivery.xyz') ? `/api/proxy/image?url=${encodeURIComponent(url.replace('https://', 'http://'))}` : url
+    ),
     date: row.published_at || row.created_at
   }));
   return { posts };
